@@ -6,6 +6,7 @@ riscv-march-$(CONFIG_ARCH_RV64I)	:= rv64ima
 riscv-march-$(CONFIG_FPU)		:= $(riscv-march-y)fd
 riscv-march-$(CONFIG_RISCV_ISA_C)	:= $(riscv-march-y)c
 riscv-march-$(CONFIG_VECTOR)		:= $(riscv-march-y)v0p7
+riscv-march-$(CONFIG_THEAD_ISA)		:= $(riscv-march-y)_xtheadc
 
 ifndef CONFIG_TOOLCHAIN_NEEDS_OLD_ISA_SPEC
 riscv-march-$(CONFIG_TOOLCHAIN_NEEDS_EXPLICIT_ZICSR_ZIFENCEI) := $(riscv-march-y)_zicsr_zifencei
