@@ -53,7 +53,7 @@ endif
 
 include $(srctree)/arch/riscv/Makefile.isa
 
-KBUILD_CFLAGS += -march=$(subst v0p7,,$(subst fd,,$(riscv-march-y)))
+KBUILD_CFLAGS += -march=$(subst _xtheadc,,$(subst v0p7,,$(subst fd,,$(riscv-march-y))))
 KBUILD_AFLAGS += -march=$(riscv-march-y)
 
 KBUILD_CFLAGS += -mno-save-restore
