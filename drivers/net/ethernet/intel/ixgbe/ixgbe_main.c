@@ -7987,9 +7987,11 @@ static bool ixgbe_check_fw_error(struct ixgbe_adapter *adapter)
 	/* read fwsm.ext_err_ind register and log errors */
 	fwsm = IXGBE_READ_REG(hw, IXGBE_FWSM(hw));
 
+	/* temporarily block fwsm=0, it's noisy in dmesg */
 	if (fwsm & IXGBE_FWSM_EXT_ERR_IND_MASK ||
 	    !(fwsm & IXGBE_FWSM_FW_VAL_BIT))
-		e_dev_warn("Warning firmware error detected FWSM: 0x%08X\n",
+		if (fwsm)
+			e_dev_warn("Warning firmware error detected FWSM: 0x%08X\n",
 			   fwsm);
 
 	if (hw->mac.ops.fw_recovery_mode && hw->mac.ops.fw_recovery_mode(hw)) {
