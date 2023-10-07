@@ -2,7 +2,8 @@ name: sophgo-kernel
 
 on:
   push:
- 
+  pull_request:
+  workflow_dispatch:
   schedule:
     - cron: "0 2 * * *"
 
@@ -14,8 +15,16 @@ jobs:
         include:
           - name: thead-gcc
             toolchain_tripe: riscv64-unknown-linux-gnu-
+            board: pioneer
           - name: gcc-12
             toolchain_tripe: riscv64-linux-gnu-
+            board: pioneer
+          - name: thead-gcc
+            toolchain_tripe: riscv64-unknown-linux-gnu-
+            board: pisces
+          - name: gcc-12
+            toolchain_tripe: riscv64-linux-gnu-
+            board: pisces
 
     runs-on: ubuntu-22.04
     env:
@@ -26,13 +35,13 @@ jobs:
       KBUILD_BUILD_USER: riscv
       KBUILD_BUILD_HOST: riscv-builder
       KDEB_COMPRESS: xz
-      board: sg2042
+      board: ${{ matrix.board }}
       CROSS_COMPILE: ${{ matrix.toolchain_tripe }}
 
     steps:
       - name: Update Apt Cache
         run: sudo apt update
-    
+
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
         with:
@@ -49,7 +58,7 @@ jobs:
           swap-storage: true
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: kernel
 
@@ -77,6 +86,10 @@ jobs:
                   echo "_xtheadc kernel"
                   echo "CONFIG_THEAD_ISA=y" >> .config
                 fi
+                if [[ ${{ matrix.board }} = "pisces" ]]; then
+                  echo "pisces kernel"
+                  sed -i 's/# CONFIG_SOPHGO_MULTI_CHIP_CLOCK_SYNC is not set/CONFIG_SOPHGO_MULTI_CHIP_CLOCK_SYNC=y/' .config
+                fi
                 echo "CONFIG_VECTOR=y" >> .config
                 make -j$(nproc) dtbs
                 make -j$(nproc) bindeb-pkg LOCALVERSION="-${board}"
@@ -85,11 +98,11 @@ jobs:
               popd
 
       - name: compress
-        run: tar -zcvf sophgo-kernel-${{ matrix.name }}.tar.gz artifact
+        run: tar -zcvf sophgo-kernel-${{ matrix.name }}-${{ matrix.board }}.tar.gz artifact
 
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v3
         with:
-          name: sophgo-kernel-${{ matrix.name }}.tar.gz
-          path: sophgo-kernel-${{ matrix.name }}.tar.gz
+          name: sophgo-kernel-${{ matrix.name }}-${{ matrix.board }}.tar.gz
+          path: sophgo-kernel-${{ matrix.name }}-${{ matrix.board }}.tar.gz
           retention-days: 20
