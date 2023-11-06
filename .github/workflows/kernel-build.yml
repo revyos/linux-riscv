@@ -14,29 +14,27 @@ jobs:
       matrix:
         include:
           - name: thead-gcc
-            toolchain_tripe: riscv64-unknown-linux-gnu-
             board: pioneer
-          - name: gcc-12
-            toolchain_tripe: riscv64-linux-gnu-
+          - name: gcc-13
             board: pioneer
           - name: thead-gcc
-            toolchain_tripe: riscv64-unknown-linux-gnu-
             board: pisces
-          - name: gcc-12
-            toolchain_tripe: riscv64-linux-gnu-
+          - name: gcc-13
             board: pisces
 
     runs-on: ubuntu-22.04
     env:
-      xuetie_toolchain: https://occ-oss-prod.oss-cn-hangzhou.aliyuncs.com/resource//1698113812618
+      xuantie_toolchain: https://occ-oss-prod.oss-cn-hangzhou.aliyuncs.com/resource//1698113812618
       toolchain_file_name: Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.8.0-20231018.tar.gz
+      mainline_toolchain: https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.10.18
+      mainline_toolchain_file_name: riscv64-glibc-ubuntu-22.04-gcc-nightly-2023.10.18-nightly.tar.gz
       wget_alias: 'wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 0'
       ARCH: riscv
       KBUILD_BUILD_USER: riscv
       KBUILD_BUILD_HOST: riscv-builder
       KDEB_COMPRESS: xz
       board: ${{ matrix.board }}
-      CROSS_COMPILE: ${{ matrix.toolchain_tripe }}
+      CROSS_COMPILE: riscv64-unknown-linux-gnu-
 
     steps:
       - name: Update Apt Cache
@@ -68,18 +66,21 @@ jobs:
                                   libncurses-dev gawk flex bison openssl libssl-dev tree \
                                   dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf \
                                   device-tree-compiler xz-utils devscripts ccache debhelper
-              sudo update-alternatives --install \
-                  /usr/bin/riscv64-linux-gnu-gcc riscv64-gcc /usr/bin/riscv64-linux-gnu-gcc-12 10
-              sudo update-alternatives --install \
-                  /usr/bin/riscv64-linux-gnu-g++ riscv64-g++ /usr/bin/riscv64-linux-gnu-g++-12 10
 
       - name: Compile Kernel && Install
         run: |
               mkdir -p artifact
-              ${wget_alias} ${xuetie_toolchain}/${toolchain_file_name}
-              tar -xvf ${toolchain_file_name} -C /opt
-              pushd kernel
+              if [[ ${{ matrix.name }} = "thead-gcc" ]]; then
+                ${wget_alias} ${xuantie_toolchain}/${toolchain_file_name}
+                tar -xvf ${toolchain_file_name} -C /opt
                 export PATH="/opt/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.8.0/bin:$PATH"
+              else
+                ${wget_alias} ${mainline_toolchain}/${mainline_toolchain_file_name}
+                tar -xvf ${mainline_toolchain_file_name} -C /opt
+                export PATH="/opt/riscv/bin:$PATH"
+              fi
+              ${CROSS_COMPILE}gcc -v
+              pushd kernel
                 export KDEB_PKGVERSION="$(date "+%Y.%m.%d.%H.%M")+$(git rev-parse --short HEAD)"
                 make sophgo_mango_ubuntu_defconfig
                 if [[ ${{ matrix.name }} = "thead-gcc" ]]; then
