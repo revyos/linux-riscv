@@ -1,0 +1,105 @@
+name: sophgo-kernel
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
+
+jobs:
+  build-kernel:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc-13
+            board: pioneer
+          - name: gcc-13
+            board: pisces
+
+    runs-on: ubuntu-22.04
+    env:
+      xuantie_toolchain: https://occ-oss-prod.oss-cn-hangzhou.aliyuncs.com/resource//1705395627867
+      toolchain_file_name: Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.8.1-20240115.tar.gz
+      mainline_toolchain: https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2024.03.01
+      mainline_toolchain_file_name: riscv64-glibc-ubuntu-22.04-gcc-nightly-2024.03.01-nightly.tar.gz
+      wget_alias: 'wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 0'
+      ARCH: riscv
+      KBUILD_BUILD_USER: riscv
+      KBUILD_BUILD_HOST: riscv-builder
+      KDEB_COMPRESS: xz
+      board: ${{ matrix.board }}
+      CROSS_COMPILE: riscv64-unknown-linux-gnu-
+
+    steps:
+      - name: Update Apt Cache
+        run: sudo apt update
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: true
+          # all of these default to true, but feel free to set to
+          # "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: kernel
+
+      - name: Install software
+        run: |
+              sudo apt install -y gdisk dosfstools g++-12-riscv64-linux-gnu build-essential \
+                                  libncurses-dev gawk flex bison openssl libssl-dev tree \
+                                  dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf \
+                                  device-tree-compiler xz-utils devscripts ccache debhelper
+
+      - name: Compile Kernel && Install
+        run: |
+              mkdir -p artifact
+              if [[ ${{ matrix.name }} = "thead-gcc" ]]; then
+                ${wget_alias} ${xuantie_toolchain}/${toolchain_file_name}
+                tar -xvf ${toolchain_file_name} -C /opt
+                export PATH="/opt/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.8.1/bin:$PATH"
+              else
+                ${wget_alias} ${mainline_toolchain}/${mainline_toolchain_file_name}
+                tar -xvf ${mainline_toolchain_file_name} -C /opt
+                export PATH="/opt/riscv/bin:$PATH"
+              fi
+              ${CROSS_COMPILE}gcc -v
+              pushd kernel
+                export KDEB_PKGVERSION="$(date "+%Y.%m.%d.%H.%M")+$(git rev-parse --short HEAD)"
+                make sophgo_mango_ubuntu_defconfig
+                if [[ ${{ matrix.name }} = "thead-gcc" ]]; then
+                  echo "_xtheadc kernel"
+                  echo "CONFIG_THEAD_ISA=y" >> .config
+                fi
+                if [[ ${{ matrix.board }} = "pisces" ]]; then
+                  echo "pisces kernel"
+                  sed -i 's/# CONFIG_SOPHGO_MULTI_CHIP_CLOCK_SYNC is not set/CONFIG_SOPHGO_MULTI_CHIP_CLOCK_SYNC=y/' .config
+                fi
+                echo "CONFIG_VECTOR=y" >> .config
+                make -j$(nproc) dtbs
+                make -j$(nproc) bindeb-pkg LOCALVERSION="-${board}"
+                sudo cp -v arch/riscv/boot/dts/sophgo/*.dtb ../artifact
+                sudo cp -v ../*.deb ../artifact
+              popd
+
+      - name: compress
+        run: tar -zcvf sophgo-kernel-${{ matrix.name }}-${{ matrix.board }}.tar.gz artifact
+
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v3
+        with:
+          name: sophgo-kernel-${{ matrix.name }}-${{ matrix.board }}.tar.gz
+          path: sophgo-kernel-${{ matrix.name }}-${{ matrix.board }}.tar.gz
+          retention-days: 20
