@@ -78,16 +78,17 @@ jobs:
               ${CROSS_COMPILE}gcc -v
               pushd kernel
                 export KDEB_PKGVERSION="$(date "+%Y.%m.%d.%H.%M")+$(git rev-parse --short HEAD)"
-                make sophgo_mango_ubuntu_defconfig
+                make revyos_defconfig
                 if [[ ${{ matrix.name }} = "thead-gcc" ]]; then
                   echo "_xtheadc kernel"
                   echo "CONFIG_THEAD_ISA=y" >> .config
                 fi
                 if [[ ${{ matrix.board }} = "pisces" ]]; then
                   echo "pisces kernel"
+                  sed -i 's/# CONFIG_HIGHMEM is not set/CONFIG_HIGHMEM=y/' .config
                   sed -i 's/# CONFIG_SOPHGO_MULTI_CHIP_CLOCK_SYNC is not set/CONFIG_SOPHGO_MULTI_CHIP_CLOCK_SYNC=y/' .config
                 fi
-                echo "CONFIG_VECTOR=y" >> .config
+                #echo "CONFIG_VECTOR=y" >> .config
                 make -j$(nproc) dtbs
                 make -j$(nproc) bindeb-pkg LOCALVERSION="-${board}"
                 sudo cp -v arch/riscv/boot/dts/sophgo/*.dtb ../artifact
