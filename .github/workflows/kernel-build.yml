@@ -85,6 +85,8 @@ jobs:
                 fi
                 if [[ ${{ matrix.board }} = "pisces" ]]; then
                   echo "pisces kernel"
+                  rm -rf .config
+                  make revyos_pisces_defconfig
                   sed -i 's/# CONFIG_HIGHMEM is not set/CONFIG_HIGHMEM=y/' .config
                   sed -i 's/# CONFIG_SOPHGO_MULTI_CHIP_CLOCK_SYNC is not set/CONFIG_SOPHGO_MULTI_CHIP_CLOCK_SYNC=y/' .config
                 fi
