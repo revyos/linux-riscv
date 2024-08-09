@@ -26,14 +26,14 @@ jobs:
             machine: [ self-hosted, Linux, riscv64 ]
             run_image: ghcr.io/revyos/revyos-kernel-builder:riscv64-2024.04.19
             board: pioneer
-            compiler: riscv64-linux-gnu-gcc-11
+            compiler: riscv64-linux-gnu-gcc-13
 
           - name: native
             cross: riscv64-linux-gnu-
             machine: [ self-hosted, Linux, riscv64 ]
             run_image: ghcr.io/revyos/revyos-kernel-builder:riscv64-2024.04.19
             board: pisces
-            compiler: riscv64-linux-gnu-gcc-11
+            compiler: riscv64-linux-gnu-gcc-13
 
     runs-on: ${{ matrix.machine }}
     container:
