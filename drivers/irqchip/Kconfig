@@ -729,6 +729,14 @@ config MCHP_EIC
 	help
 	  Support for Microchip External Interrupt Controller.
 
+config SOPHGO_SG2042_MSI
+	bool "Sophgo SG2042 MSI controller"
+	depends on ARCH_SOPHGO || COMPILE_TEST
+	help
+	  Support for the Sophgo SG2042 MSI Controller.
+	  This is used as a chained controller, routing MSI source
+	  to the primary PLIC controller.
+
 config SUNPLUS_SP7021_INTC
 	bool "Sunplus SP7021 interrupt controller" if COMPILE_TEST
 	default SOC_SP7021
