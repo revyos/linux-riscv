@@ -173,6 +173,58 @@
 			#clock-cells = <1>;
 		};
 
+		intc1: top_intc@70300102e0 {
+			compatible = "sophgo,top-intc";
+			reg = <0x70 0x300102e0 0x0 0x4>,
+			      <0x70 0x30010300 0x0 0x4>,
+			      <0x70 0x30010304 0x0 0x4>;
+			reg-names = "sta", "set", "clr";
+			reg-bitwidth = <32>;
+			interrupt-controller;
+			#interrupt-cells = <0x1>; // only applies to child node
+			interrupt-parent = <&intc>;
+			interrupts = <64 IRQ_TYPE_LEVEL_HIGH>,
+				     <65 IRQ_TYPE_LEVEL_HIGH>,
+				     <66 IRQ_TYPE_LEVEL_HIGH>,
+				     <67 IRQ_TYPE_LEVEL_HIGH>,
+				     <68 IRQ_TYPE_LEVEL_HIGH>,
+				     <69 IRQ_TYPE_LEVEL_HIGH>,
+				     <70 IRQ_TYPE_LEVEL_HIGH>,
+				     <71 IRQ_TYPE_LEVEL_HIGH>,
+				     <72 IRQ_TYPE_LEVEL_HIGH>,
+				     <73 IRQ_TYPE_LEVEL_HIGH>,
+				     <74 IRQ_TYPE_LEVEL_HIGH>,
+				     <75 IRQ_TYPE_LEVEL_HIGH>,
+				     <76 IRQ_TYPE_LEVEL_HIGH>,
+				     <77 IRQ_TYPE_LEVEL_HIGH>,
+				     <78 IRQ_TYPE_LEVEL_HIGH>,
+				     <79 IRQ_TYPE_LEVEL_HIGH>,
+				     <80 IRQ_TYPE_LEVEL_HIGH>,
+				     <81 IRQ_TYPE_LEVEL_HIGH>,
+				     <82 IRQ_TYPE_LEVEL_HIGH>,
+				     <83 IRQ_TYPE_LEVEL_HIGH>,
+				     <84 IRQ_TYPE_LEVEL_HIGH>,
+				     <85 IRQ_TYPE_LEVEL_HIGH>,
+				     <86 IRQ_TYPE_LEVEL_HIGH>,
+				     <87 IRQ_TYPE_LEVEL_HIGH>,
+				     <88 IRQ_TYPE_LEVEL_HIGH>,
+				     <89 IRQ_TYPE_LEVEL_HIGH>,
+				     <90 IRQ_TYPE_LEVEL_HIGH>,
+				     <91 IRQ_TYPE_LEVEL_HIGH>,
+				     <92 IRQ_TYPE_LEVEL_HIGH>,
+				     <93 IRQ_TYPE_LEVEL_HIGH>,
+				     <94 IRQ_TYPE_LEVEL_HIGH>,
+				     <95 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "msi0",  "msi1",  "msi2",  "msi3",
+					  "msi4",  "msi5",  "msi6",  "msi7",
+					  "msi8",  "msi9",  "msi10", "msi11",
+					  "msi12", "msi13", "msi14", "msi15",
+					  "msi16", "msi17", "msi18", "msi19",
+					  "msi20", "msi21", "msi22", "msi23",
+					  "msi24", "msi25", "msi26", "msi27",
+					  "msi28", "msi29", "msi30", "msi31";
+		};
+
 		rpgate: clock-controller@7030010368 {
 			compatible = "sophgo,sg2042-rpgate";
 			reg = <0x70 0x30010368 0x0 0x98>;
