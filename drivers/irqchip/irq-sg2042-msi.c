@@ -26,6 +26,11 @@
  * now we pre-requested plic interrupt, but may try request
  * plic interrupt when needed, like gicp_irq_domain_alloc.
  * see drivers/irqchip/irq-mvebu-gicp.c
+ * FIXME: 我目前的理解是，gicp_irq_domain_alloc 中的做法是
+ * 当 pcie device 申请 virq 时（也就是触发 .alloc 回调时）
+ * 动态地将 hwirq 和 GIC 的 SPI# 关联起来，并设置到 parent 中
+ * 这样 gicp_irq_chip 的 irq_chip 回调只要简单地设置为 irq_chip_XXXX_parent 就好了
+ * 而现在 top-intc 中这个 parent 的调用全部是自己维护和调用，感觉可以优化
  */
 struct top_intc_data {
 	struct platform_device *pdev;

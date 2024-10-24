@@ -346,7 +346,9 @@ static int sg2042_pcie_msi_init(struct sg2042_pcie *pcie)
 	u64 msi_target = 0;
 	u32 value = 0;
 
-	// support 512 msi vectors
+	// FIXME: 这里分配的空间大小要和 MAX_MSI_IRQS 关联起来
+	// 可以参考 drivers/pci/controller/pci-tegra.c 的 tegra_pcie_msi_setup
+	// 中如何限制分配物理地址在 32 位空间
 	pcie->msi_page = dma_alloc_coherent(dev, 2048, &pcie->msi_data,
 					  (GFP_KERNEL|GFP_DMA32|__GFP_ZERO));
 	if (pcie->msi_page == NULL)
