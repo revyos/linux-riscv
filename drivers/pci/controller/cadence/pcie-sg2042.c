@@ -69,33 +69,33 @@ struct sg2042_pcie {
  * At the same time, bottom chip uses a chained handler to handle the controller's
  * MSI IRQ edge triggered.
  */
-static void sg2042_pcie_msi_top_irq_ack(struct irq_data *d)
+static void sg2042_top_msi_irq_ack(struct irq_data *d)
 {
 	irq_chip_ack_parent(d);
 }
 
-static void sg2042_pcie_msi_top_irq_mask(struct irq_data *d)
+static void sg2042_top_msi_irq_mask(struct irq_data *d)
 {
 	pci_msi_mask_irq(d);
 	irq_chip_mask_parent(d);
 }
 
-static void sg2042_pcie_msi_top_irq_unmask(struct irq_data *d)
+static void sg2042_top_msi_irq_unmask(struct irq_data *d)
 {
 	pci_msi_unmask_irq(d);
 	irq_chip_unmask_parent(d);
 }
 
-static struct irq_chip sg2042_pcie_msi_top_chip = {
-	.name = "SG2042 PCIe MSI",
-	.irq_ack = sg2042_pcie_msi_top_irq_ack,
-	.irq_mask = sg2042_pcie_msi_top_irq_mask,
-	.irq_unmask = sg2042_pcie_msi_top_irq_unmask,
+static struct irq_chip sg2042_top_msi_chip = {
+	.name = "SG2042 PCIe MSI for top-intc",
+	.irq_ack = sg2042_top_msi_irq_ack,
+	.irq_mask = sg2042_top_msi_irq_mask,
+	.irq_unmask = sg2042_top_msi_irq_unmask,
 };
 
-static struct msi_domain_info sg2042_pcie_msi_domain_info = {
+static struct msi_domain_info sg2042_top_msi_domain_info = {
 	.flags	= (MSI_FLAG_USE_DEF_DOM_OPS | MSI_FLAG_USE_DEF_CHIP_OPS),
-	.chip	= &sg2042_pcie_msi_top_chip,
+	.chip	= &sg2042_top_msi_chip,
 };
 
 static struct irq_domain *sg2042_pcie_get_parent_irq_domain(struct device *dev)
@@ -125,7 +125,6 @@ static struct irq_domain *sg2042_pcie_get_parent_irq_domain(struct device *dev)
 	return domain;
 }
 
-
 static int sg2042_pcie_setup_top_intc(struct sg2042_pcie *pcie)
 {
 	struct device *dev = pcie->cdns_pcie->dev;
@@ -133,7 +132,7 @@ static int sg2042_pcie_setup_top_intc(struct sg2042_pcie *pcie)
 	struct irq_domain *parent_domain = sg2042_pcie_get_parent_irq_domain(dev);
 
 	pcie->msi_domain = pci_msi_create_irq_domain(fwnode,
-						     &sg2042_pcie_msi_domain_info,
+						     &sg2042_top_msi_domain_info,
 						     parent_domain);
 
 	if (!pcie->msi_domain) {
@@ -143,6 +142,18 @@ static int sg2042_pcie_setup_top_intc(struct sg2042_pcie *pcie)
 
 	return 0;
 }
+
+static struct irq_chip sg2042_pcie_msi_chip = {
+	.name = "SG2042 PCIe MSI",
+	.irq_ack = irq_chip_ack_parent,
+	.irq_mask = pci_msi_mask_irq,
+	.irq_unmask = pci_msi_unmask_irq,
+};
+
+static struct msi_domain_info sg2042_pcie_msi_domain_info = {
+	.flags	= (MSI_FLAG_USE_DEF_DOM_OPS | MSI_FLAG_USE_DEF_CHIP_OPS),
+	.chip	= &sg2042_pcie_msi_chip,
+};
 
 static irqreturn_t sg2042_pcie_handle_msi_irq(struct sg2042_pcie *pcie)
 {
@@ -209,6 +220,10 @@ static void sg2042_pcie_chained_msi_isr(struct irq_desc *desc)
 	chained_irq_exit(chip, desc);
 }
 
+/*
+ * FIXME: when CONFIG_SMP enabled, this callback will be triggered
+ * now just return error to discard, but may need code to handle this
+ */
 static int sg2042_pcie_msi_irq_set_affinity(struct irq_data *d,
 					    const struct cpumask *mask,
 					    bool force)
@@ -235,18 +250,19 @@ static void sg2042_pcie_msi_irq_compose_msi_msg(struct irq_data *d,
 		(int)d->hwirq, msg->address_hi, msg->address_lo);
 }
 
-/* Just a dummy function to make irq_chip_xxx_parent happy in top chip callbacks */
+/*
+ * FIXME: Just a dummy function to make handle_edge_irq happy
+ * see kernel/irq/chip.c, handle_edge_irq will call irq_ack unconditionally
+ */
 static void sg2042_pcie_msi_irq_dummy(struct irq_data *d)
 {
 }
 
 static struct irq_chip sg2042_pcie_msi_bottom_chip = {
-	.name = "SG2042 MSI",
+	.name = "SG2042 PLIC-MSI translator",
 	.irq_ack = sg2042_pcie_msi_irq_dummy,
 	.irq_compose_msi_msg = sg2042_pcie_msi_irq_compose_msi_msg,
 	.irq_set_affinity = sg2042_pcie_msi_irq_set_affinity,
-	.irq_mask = sg2042_pcie_msi_irq_dummy,
-	.irq_unmask = sg2042_pcie_msi_irq_dummy,
 };
 
 static int sg2042_pcie_irq_domain_alloc(struct irq_domain *domain,
