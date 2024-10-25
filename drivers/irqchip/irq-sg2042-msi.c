@@ -82,8 +82,12 @@ static int top_intc_domain_alloc(struct irq_domain *domain,
 		data->tic_to_plic[hwirq + i] = data->plic_hwirqs[hwirq + i];
 	}
 
-	pr_info("----> %s hwirq %ld, irq %d, plic irq %d, total %d\n", __func__,
-		hwirq, virq, data->plic_irqs[hwirq], nr_irqs);
+	pr_info("----> %s hwirq %ld, irq %d, plic irq %d, total %d\n",
+		__func__,
+		hwirq,
+		virq,
+		data->plic_irqs[hwirq],
+		nr_irqs);
 	//dump_stack();
 	return 0;
 }
@@ -211,13 +215,17 @@ static void top_intc_irq_handler(struct irq_desc *plic_desc)
 	if (i < data->irq_num) {
 		top_intc_hwirq = i;
 		top_intc_irq = irq_find_mapping(data->domain, top_intc_hwirq);
-		pr_debug("%s plic hwirq %ld, tic hwirq %ld, tic irq %d\n", __func__,
-				plic_hwirq, top_intc_hwirq, top_intc_irq);
+		pr_debug("----> %s plic hwirq %ld, tic hwirq %ld, tic irq %d\n",
+			 __func__,
+			 plic_hwirq,
+			 top_intc_hwirq,
+			 top_intc_irq);
 		if (top_intc_irq)
 			ret = generic_handle_irq(top_intc_irq);
-		pr_debug("%s handled tic irq %d, %d\n", __func__, top_intc_irq, ret);
+		pr_debug("----> %s handled tic irq %d, %d\n",
+			 __func__, top_intc_irq, ret);
 	} else {
-		pr_debug("%s not found tic hwirq for plic hwirq %ld\n", __func__, plic_hwirq);
+		pr_debug("----> %s not found tic hwirq for plic hwirq %ld\n", __func__, plic_hwirq);
 		// workaround, ack unexpected(unregistered) interrupt
 		writel(1 << (plic_hwirq - data->plic_hwirqs[0]), data->reg_clr);
 	}
@@ -276,7 +284,8 @@ static int top_intc_probe(struct platform_device *pdev)
 		data->plic_irqs[i] = irq;
 		data->plic_irq_datas[i] = irq_get_irq_data(irq);
 		data->plic_hwirqs[i] = data->plic_irq_datas[i]->hwirq;
-		dev_dbg(&pdev->dev, "%s[%d]: plic hwirq %ld, plic irq %d\n", msi_name, i,
+		dev_dbg(&pdev->dev, "----> %s[%d]: plic hwirq %ld, plic irq %d\n",
+			msi_name, i,
 			data->plic_hwirqs[i], data->plic_irqs[i]);
 	}
 	if (!i) {
