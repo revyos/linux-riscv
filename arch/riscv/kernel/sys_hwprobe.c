@@ -168,25 +168,7 @@ static bool hwprobe_ext0_has(const struct cpumask *cpus, unsigned long ext)
 #if defined(CONFIG_RISCV_PROBE_UNALIGNED_ACCESS)
 static u64 hwprobe_misaligned(const struct cpumask *cpus)
 {
-	int cpu;
-	u64 perf = -1ULL;
-
-	for_each_cpu(cpu, cpus) {
-		int this_perf = per_cpu(misaligned_access_speed, cpu);
-
-		if (perf == -1ULL)
-			perf = this_perf;
-
-		if (perf != this_perf) {
-			perf = RISCV_HWPROBE_MISALIGNED_SCALAR_UNKNOWN;
-			break;
-		}
-	}
-
-	if (perf == -1ULL)
-		return RISCV_HWPROBE_MISALIGNED_SCALAR_UNKNOWN;
-
-	return perf;
+	return RISCV_HWPROBE_MISALIGNED_SCALAR_UNKNOWN;
 }
 #else
 static u64 hwprobe_misaligned(const struct cpumask *cpus)
