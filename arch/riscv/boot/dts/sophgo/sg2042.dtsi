@@ -653,7 +653,7 @@
 		};
 
 		sd: mmc@704002b000 {
-			compatible = "sophgo,sg2042-dwcmshc";
+			compatible = "sophgo,sg2042-dwcmshc", "bitmain,bm-sd";
 			reg = <0x70 0x4002b000 0x0 0x1000>;
 			interrupt-parent = <&intc>;
 			interrupts = <136 IRQ_TYPE_LEVEL_HIGH>;
