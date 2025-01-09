@@ -284,6 +284,7 @@
 			};
 		};
 
+#if 0
 		pcie_rc2: pcie@7062800000 {
 			compatible = "sophgo,cdns-pcie-host", "sophgo,sg2042-pcie-host";
 			device_type = "pci";
@@ -309,6 +310,7 @@
 			msi-parent = <&msi>;
 			status = "disabled";
 		};
+#endif
 
 		cdns_pcie1_ctrl: syscon@7063800000 {
 			compatible = "sophgo,sg2042-pcie-ctrl", "syscon";

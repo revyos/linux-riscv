@@ -57,9 +57,11 @@
 	status = "okay";
 };
 
+#if 0
 &pcie_rc2 {
 	status = "okay";
 };
+#endif
 
 &pinctrl {
 	emmc_cfg: sdhci-emmc-cfg {
